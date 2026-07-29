@@ -12,3 +12,13 @@ Valid roll symbols:
     "0"..."9"   -> number of pins knocked down on that roll
 
 """
+
+from typing import List, Optional, Union
+
+Roll = str
+Score = Optional[int]
+
+STRIKE_SYMBOLS = {"X", "x"}
+SPARE_SYMBOL = "/"
+DIGIT_SYMBOLS = set("0123456789")
+VALID_SYMBOLS = STRIKE_SYMBOLS | {SPARE_SYMBOL} | DIGIT_SYMBOLS
