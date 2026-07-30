@@ -50,3 +50,34 @@ def test_all_gutter_balls_is_zero():
     rolls = ["0", "0"] * 10
     game = BowlingGame(rolls)
     assert game.total_score() == 0
+
+
+# ----------------------------------------------------------------------
+# 5. Tenth frame behavior
+# ----------------------------------------------------------------------
+
+def test_tenth_frame_strike_plus_two_bonus_rolls():
+    rolls = ["3", "4"] * 9 + ["X", "5", "4"]
+    game = BowlingGame(rolls)
+    # 9 open frames of 7 = 63, plus 10th: 10+5+4 = 19 -> 82
+    assert game.total_score() == 82
+
+
+def test_tenth_frame_spare_plus_one_bonus_roll():
+    rolls = ["3", "4"] * 9 + ["5", "/", "7"]
+    game = BowlingGame(rolls)
+    # 63 + (10th: 5+5+7=17) = 80
+    assert game.total_score() == 80
+
+
+def test_tenth_frame_open_frame_ends_game_no_bonus():
+    rolls = ["3", "4"] * 9 + ["5", "3"]
+    game = BowlingGame(rolls)
+    # 63 + 8 = 71
+    assert game.total_score() == 71
+
+
+def test_tenth_frame_three_strikes():
+    rolls = ["3", "4"] * 9 + ["X", "X", "X"]
+    game = BowlingGame(rolls)
+    assert game.total_score() == 63 + 30
