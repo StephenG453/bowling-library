@@ -55,9 +55,14 @@ class BowlingGame:
     """
 
     def __init__(self, rolls: List[Roll]):
+        self._validate_symbols(rolls)
         self.rolls: List[Roll] = list(rolls)
 
         self.frame_roll_start: List[Optional[int]] = [None] * 10
+
+        self.frames_pins: List[Optional[List[int]]] = self._parse(self.rolls)
+
+        self.raw_pins: List[int] = self._compute_raw_pins(self.rolls)
 
     # ------------------------------------------------------------------
     # Validation / parsing
