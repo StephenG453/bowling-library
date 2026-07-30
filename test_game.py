@@ -81,3 +81,48 @@ def test_tenth_frame_three_strikes():
     rolls = ["3", "4"] * 9 + ["X", "X", "X"]
     game = BowlingGame(rolls)
     assert game.total_score() == 63 + 30
+
+
+# ----------------------------------------------------------------------
+# 6. Validation tests
+# ----------------------------------------------------------------------
+
+def test_spare_as_first_roll_of_frame_is_invalid():
+    with pytest.raises(BowlingScoreError):
+        BowlingGame(["/", "5"] + ["3", "4"] * 9)
+
+
+def test_invalid_character_is_rejected():
+    with pytest.raises(BowlingScoreError):
+        BowlingGame(["Q", "4"] + ["3", "4"] * 9)
+
+
+def test_too_many_rolls_in_tenth_frame_is_rejected():
+    with pytest.raises(BowlingScoreError):
+        BowlingGame(["3", "4"] * 9 + ["X", "5", "4", "2"])
+
+
+def test_frame_pin_count_exceeding_ten_without_spare_is_rejected():
+    with pytest.raises(BowlingScoreError):
+        BowlingGame(["6", "5"] + ["3", "4"] * 9)
+
+
+def test_extra_rolls_after_game_completion_is_rejected():
+    with pytest.raises(BowlingScoreError):
+        BowlingGame(["3", "4"] * 10 + ["5"])
+
+
+def test_tenth_frame_spare_cannot_be_followed_by_spare_bonus():
+    # bonus roll after a 10th-frame spare has nothing before it to complete
+    with pytest.raises(BowlingScoreError):
+        BowlingGame(["3", "4"] * 9 + ["5", "/", "/"])
+
+
+def test_tenth_frame_open_frame_cannot_take_extra_roll():
+    with pytest.raises(BowlingScoreError):
+        BowlingGame(["3", "4"] * 9 + ["5", "3", "2"])
+
+
+def test_non_list_input_is_rejected():
+    with pytest.raises(BowlingScoreError):
+        BowlingGame("X" * 12)  # a string, not a list
