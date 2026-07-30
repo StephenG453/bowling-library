@@ -226,3 +226,76 @@ class BowlingGame:
             # Open frame -> game ends here, no bonus roll allowed.
             frames.append([pins_1, pins_2])
             return pointer
+
+    # ------------------------------------------------------------------
+    # Scoring
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _compute_raw_pins(rolls: List[Roll]) -> List[int]:
+        raw: List[int] = []
+        for r in rolls:
+            if _is_strike(r):
+                raw.append(10)
+            elif r == SPARE_SYMBOL:
+                # Structural validation in _parse guarantees a spare is
+                # always immediately preceded by the digit roll it completes.
+                raw.append(10 - raw[-1])
+            else:
+                raw.append(int(r))
+        return raw
+
+    def frame_scores(self) -> List[Score]:
+        """Cumulative score at the end of each frame (list of 10 values).
+
+        A value is `None` if that frame (or an earlier one) cannot yet be
+        scored because required bonus rolls haven't been thrown.
+        """
+        results: List[Score] = []
+        running_total = 0
+        broken = False
+
+        for i in range(9):
+            pins = self.frames_pins[i]
+            start = self.frame_roll_start[i]
+            if broken or pins is None or start is None:
+                results.append(None)
+                broken = True
+                continue
+
+            if len(pins) == 1:  # strike: needs next two rolls (any frame)
+                needed = self.raw_pins[start + 1: start + 3]
+                if len(needed) < 2:
+                    results.append(None)
+                    broken = True
+                    continue
+                frame_score = 10 + sum(needed)
+            elif sum(pins) == 10:  # spare: needs the very next roll
+                needed = self.raw_pins[start + 2: start + 3]
+                if len(needed) < 1:
+                    results.append(None)
+                    broken = True
+                    continue
+                frame_score = 10 + needed[0]
+            else:  # open frame: self-contained
+                frame_score = sum(pins)
+
+            running_total += frame_score
+            results.append(running_total)
+
+        # Frame 10 - score is simply the total pins knocked down in it.
+        tenth = self.frames_pins[9]
+        if broken or tenth is None:
+            results.append(None)
+        else:
+            running_total += sum(tenth)
+            results.append(running_total)
+
+        return results
+
+    def total_score(self) -> Score:
+        """Final game score, or None if the game is not yet complete."""
+        return self.frame_scores()[-1]
+
+    def is_complete(self) -> bool:
+        return self.frame_scores()[-1] is not None
