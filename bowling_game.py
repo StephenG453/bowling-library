@@ -136,3 +136,93 @@ class BowlingGame:
                 )
             frames.append([pins_1, pins_2])
         return pointer + 1
+
+
+    def _parse_tenth_frame(self, rolls, pointer, frames) -> int:
+        n = len(rolls)
+
+        def take():
+            nonlocal pointer
+            v = rolls[pointer]
+            pointer += 1
+            return v
+
+        roll_1 = take()
+        if roll_1 == SPARE_SYMBOL:
+            raise BowlingScoreError(
+                "Frame 10: a spare ('/') cannot be the first roll of the frame."
+            )
+
+        if _is_strike(roll_1):
+            pins = [10]
+            if pointer >= n:
+                frames.append(None)
+                return pointer
+            roll_2 = take()
+            if roll_2 == SPARE_SYMBOL:
+                raise BowlingScoreError(
+                    "Frame 10: a spare ('/') cannot immediately follow a strike "
+                    "with no prior roll to complete."
+                )
+            pins_2 = 10 if _is_strike(roll_2) else _digit_value(roll_2, "as bonus roll 2 of frame 10")
+            pins.append(pins_2)
+
+            if pointer >= n:
+                frames.append(None)
+                return pointer
+            roll_3 = take()
+            if _is_strike(roll_2):
+                # Pins reset after a strike; roll_3 stands alone (can't be a spare).
+                if roll_3 == SPARE_SYMBOL:
+                    raise BowlingScoreError(
+                        "Frame 10: a spare ('/') cannot be the first roll after "
+                        "a reset (following back-to-back strikes)."
+                    )
+                pins_3 = 10 if _is_strike(roll_3) else _digit_value(roll_3, "as bonus roll 3 of frame 10")
+            else:
+                if roll_3 == SPARE_SYMBOL:
+                    pins_3 = 10 - pins_2
+                else:
+                    pins_3 = 10 if _is_strike(roll_3) else _digit_value(roll_3, "as bonus roll 3 of frame 10")
+                    if pins_2 + pins_3 > 10:
+                        raise BowlingScoreError(
+                            f"Frame 10: bonus pin total {pins_2}+{pins_3} exceeds 10 "
+                            f"and the roll is not marked as a spare ('/')."
+                        )
+            pins.append(pins_3)
+            frames.append(pins)
+            return pointer
+
+        # roll_1 is a plain digit roll.
+        pins_1 = _digit_value(roll_1, "as first roll of frame 10")
+        if pointer >= n:
+            frames.append(None)
+            return pointer
+        roll_2 = take()
+
+        if roll_2 == SPARE_SYMBOL:
+            pins_2 = 10 - pins_1
+            pins = [pins_1, pins_2]
+            if pointer >= n:
+                frames.append(None)
+                return pointer
+            roll_3 = take()
+            if roll_3 == SPARE_SYMBOL:
+                raise BowlingScoreError(
+                    "Frame 10: a spare ('/') cannot be the bonus roll with no "
+                    "prior roll in that sub-frame to complete."
+                )
+            pins_3 = 10 if _is_strike(roll_3) else _digit_value(roll_3, "as bonus roll of frame 10")
+            pins.append(pins_3)
+            frames.append(pins)
+            return pointer
+        else:
+            pins_2 = _digit_value(roll_2, "as second roll of frame 10")
+            if pins_1 + pins_2 > 10:
+                raise BowlingScoreError(
+                    f"Frame 10: pin total {pins_1}+{pins_2} exceeds 10 and the "
+                    f"second roll is not marked as a spare ('/')."
+                )
+            # Open frame -> game ends here, no bonus roll allowed.
+            frames.append([pins_1, pins_2])
+            return pointer
