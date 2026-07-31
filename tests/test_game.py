@@ -1,6 +1,6 @@
 import pytest
 
-from bowling_game import BowlingGame, BowlingScoreError
+from src.bowling_game import BowlingGame, BowlingScoreError
 
 
 # ----------------------------------------------------------------------
