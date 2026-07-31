@@ -159,3 +159,43 @@ def test_various_full_games(rolls, expected_total):
 def test_various_invalid_games_raise(bad_rolls):
     with pytest.raises(BowlingScoreError):
         BowlingGame(bad_rolls)
+
+
+# ------------------------------------------------------------------
+# some partial scoring scenarios
+# ---------------------------------------------------------------
+
+def test_partial_game_returns_none_for_unscoreable_frames():
+    game = BowlingGame(["3", "4"])
+    assert game.frame_scores() == [7, None, None, None, None, None, None, None, None, None]
+    assert not game.is_complete()
+
+
+def test_partial_game_spare_waits_for_bonus_roll():
+    # Frame 1 is a spare but its bonus roll hasn't been thrown yet.
+    game = BowlingGame(["8", "/"])
+    assert game.frame_scores()[0] is None
+
+
+def test_partial_game_spare_resolves_once_bonus_roll_arrives():
+    game = BowlingGame(["8", "/", "5"])
+    assert game.frame_scores()[0] == 15
+    assert game.frame_scores()[1] is None
+
+
+def test_partial_game_strike_lookahead_into_dangling_frame():
+    # Frame 1 strike needs the next two rolls; frame 3 is only half-thrown.
+    game = BowlingGame(["X", "X", "5"])
+    assert game.frame_scores()[0] == 25
+    assert game.frame_scores()[1] is None
+
+
+def test_empty_game_is_all_none():
+    game = BowlingGame([])
+    assert game.frame_scores() == [None] * 10
+    assert not game.is_complete()
+
+
+def test_lowercase_x_is_accepted_as_strike():
+    game = BowlingGame(["x"] * 12)
+    assert game.total_score() == 300
