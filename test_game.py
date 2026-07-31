@@ -126,3 +126,36 @@ def test_tenth_frame_open_frame_cannot_take_extra_roll():
 def test_non_list_input_is_rejected():
     with pytest.raises(BowlingScoreError):
         BowlingGame("X" * 12)  # a string, not a list
+
+
+# --------------------------------------------------------------
+# some parameterized scenarios
+# --------------------------------------------------------------------
+
+@pytest.mark.parametrize(
+    "rolls, expected_total",
+    [
+        (["X"] * 12, 300),
+        (["5", "/"] * 10 + ["5"], 150),
+        (["3", "4"] * 10, 70),
+        (["0", "0"] * 10, 0),
+        (["3", "4"] * 9 + ["5", "3"], 71),
+    ],
+)
+def test_various_full_games(rolls, expected_total):
+    assert BowlingGame(rolls).total_score() == expected_total
+
+
+@pytest.mark.parametrize(
+    "bad_rolls",
+    [
+        ["/", "5"] + ["3", "4"] * 9,
+        ["Q", "4"] + ["3", "4"] * 9,
+        ["3", "4"] * 9 + ["X", "5", "4", "2"],
+        ["6", "5"] + ["3", "4"] * 9,
+        ["3", "4"] * 10 + ["5"],
+    ],
+)
+def test_various_invalid_games_raise(bad_rolls):
+    with pytest.raises(BowlingScoreError):
+        BowlingGame(bad_rolls)
